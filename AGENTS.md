@@ -106,6 +106,47 @@ command | head -100
 command 2>&1 | tail -20
 ```
 
+### 浏览器 vs curl
+
+**优先用 curl** (省 token):
+```bash
+# ✅ 测试 API
+curl -s http://localhost:8000/api/data | head -50
+
+# ✅ 检查页面响应
+curl -s http://localhost:8000/ | grep -E "<title>|error|Error"
+
+# ✅ 检查 HTTP 状态
+curl -sI http://localhost:8000/ | head -5
+```
+
+**只在必要时用浏览器**:
+- 需要执行 JavaScript
+- 需要用户交互 (点击、输入)
+- 调试 CSS/布局问题
+
+### 截图使用原则
+
+截图消耗大量 token (~1000-2000/张)，应该：
+
+```
+❌ 不要: 每次修改后都截图确认
+❌ 不要: 用截图检查文字内容
+❌ 不要: 连续多张截图
+
+✅ 可以: 最终完成时截图给用户看
+✅ 可以: 调试 UI 布局/样式问题时
+✅ 可以: 用户明确要求看截图时
+```
+
+**替代截图的方法**:
+```javascript
+// 用 browser_eval 获取页面信息 (省 token)
+document.title
+document.body.innerText.substring(0, 500)
+document.querySelector('.error')?.textContent
+```
+
 ### 编辑文件
 - 使用 patch 工具精确修改，不要重写整个文件
 - 只展示修改的部分，不要输出完整文件
