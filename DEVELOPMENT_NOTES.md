@@ -184,6 +184,31 @@ curl http://localhost:9001
 curl http://localhost:8000/login
 ```
 
+### 更新后出问题，需要回退
+
+**方法 1**: 通过 Portal 页面
+1. 访问 Portal 首页
+2. 点击 "⏮️ Rollback" 按钮
+3. 选择要恢复的备份版本
+4. 点击 "Restore" 确认
+
+**方法 2**: 命令行手动回退
+```bash
+cd ~/openshelley
+
+# 查看可用备份
+ls -la shelley.backup.*
+
+# 停止服务
+./stop.sh
+
+# 恢复备份 (替换为实际文件名)
+cp shelley.backup.20260131_120000 shelley
+
+# 重新启动
+./start.sh
+```
+
 ## 探索过的方案 (未采用)
 
 ### 1. 远程浏览器
@@ -238,3 +263,9 @@ curl http://localhost:8000/login
   - 一键安装脚本
   - AMD64/ARM64 双架构支持
   - AGENTS.md Token 优化指南
+  
+- **2026-01-31**: 回退功能
+  - 新增 Portal 回退按钮 (⏮️ Rollback)
+  - 新增 `/portal/api/mgmt/backups` API 列出备份
+  - 新增 `/portal/api/mgmt/rollback` API 执行回退
+  - 回退前自动备份当前版本
