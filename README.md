@@ -39,6 +39,7 @@ cd ~/openshelley && ./start.sh
 - Go 1.21+
 - curl, jq
 - Anthropic API Key
+- Chromium/Chrome (可选，用于浏览器工具)
 
 ### 步骤
 
@@ -124,6 +125,24 @@ journalctl -u portal -f
 | `SHELLEY_PORT` | Shelley 内部端口 | 9001 |
 | `SHELLEY_URL` | Shelley 地址 | http://localhost:9001 |
 | `BASE_DIR` | 安装目录 | (自动检测) |
+
+## 🌐 浏览器工具
+
+安装 Chromium 后，Shelley 可以：
+- 打开网页并截图
+- 执行 JavaScript
+- 调试前端界面
+- 获取控制台日志
+
+```bash
+# Ubuntu/Debian
+sudo apt install chromium-browser
+
+# 或用 snap
+sudo snap install chromium
+```
+
+安装后无需配置，Shelley 会自动检测并使用。
 
 ## 🔐 安全建议
 
