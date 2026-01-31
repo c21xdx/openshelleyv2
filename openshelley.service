@@ -1,0 +1,15 @@
+[Unit]
+Description=Open Shelley Agent Service
+After=network.target
+
+[Service]
+Type=simple
+User=exedev
+WorkingDirectory=/home/exedev/002/openshelley
+Environment=ANTHROPIC_API_KEY=YOUR_API_KEY_HERE
+ExecStart=/home/exedev/002/start-openshelley.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

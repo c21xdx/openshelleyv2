@@ -1,0 +1,17 @@
+[Unit]
+Description=Portal Gateway Service
+After=network.target openshelley.service
+Wants=openshelley.service
+
+[Service]
+Type=simple
+User=exedev
+WorkingDirectory=/home/exedev/002/portal
+Environment=PORTAL_TOKEN=portal-02e1ea24ce3d7dbf439fde5bf7cbd10d
+Environment=SHELLEY_URL=http://localhost:9001
+ExecStart=/home/exedev/002/portal/portal
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

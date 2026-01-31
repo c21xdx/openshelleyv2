@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - Home</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-secondary: #f9fafb;
+            --bg-base: #ffffff;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-text: #166534;
+            --success-bg: #f0fdf4;
+            --warning-text: #854d0e;
+            --warning-bg: #fefce8;
+            --error-text: #991b1b;
+            --error-bg: #fef2f2;
+        }
+        body {
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+        .header {
+            background: var(--bg-base);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .logout-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .logout-btn:hover { background: var(--border); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+        .welcome { text-align: center; margin-bottom: 40px; }
+        .welcome h2 { font-size: 28px; margin-bottom: 12px; }
+        .welcome p { color: var(--text-secondary); font-size: 16px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .card {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+            transform: translateY(-2px);
+        }
+        .card-icon { font-size: 40px; margin-bottom: 16px; }
+        .card h3 { font-size: 18px; margin-bottom: 8px; }
+        .card p { color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+        .card-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+        
+        /* Management Panel */
+        .mgmt-panel {
+            margin-top: 40px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .mgmt-header {
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mgmt-header h4 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .mgmt-body { padding: 20px; }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .status-card {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .status-card-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .status-card-value { font-size: 14px; font-weight: 600; }
+        .status-card-value.online { color: var(--success-text); }
+        .status-card-value.offline { color: var(--error-text); }
+        .status-card-value.checking { color: var(--warning-text); }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+        .btn-success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-color: #86efac;
+        }
+        .btn-success:hover:not(:disabled) { background: #dcfce7; }
+        .btn-warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border-color: #fde047;
+        }
+        .btn-warning:hover:not(:disabled) { background: #fef9c3; }
+        .btn-danger {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border-color: #fca5a5;
+        }
+        .btn-danger:hover:not(:disabled) { background: #fee2e2; }
+        
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-box:empty::before {
+            content: "日志输出将显示在这里...";
+            color: #666;
+        }
+        .log-time { color: #6a9955; }
+        .log-info { color: #569cd6; }
+        .log-success { color: #4ec9b0; }
+        .log-warn { color: #dcdcaa; }
+        .log-error { color: #f14c4c; }
+        
+        .update-info {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .update-info.has-update {
+            background: var(--warning-bg);
+            border: 1px solid #fde047;
+        }
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🚀 Portal</h1>
+        <a href="/logout" class="logout-btn">Logout</a>
+    </header>
+
+    <div class="container">
+        <div class="welcome">
+            <h2>Welcome to Portal</h2>
+            <p>Your gateway to Open Shelley Agent and development tools</p>
+        </div>
+
+        <div class="cards">
+            <a href="/" class="card">
+                <div class="card-icon">🤖</div>
+                <h3>Open Shelley</h3>
+                <p>AI-powered coding assistant. Chat with Shelley to write code, run commands, and automate tasks.</p>
+                <span class="card-badge">AI Agent</span>
+            </a>
+
+            <a href="/portal/terminal" class="card">
+                <div class="card-icon">💻</div>
+                <h3>Terminal</h3>
+                <p>Full-featured web terminal with PTY support. Run commands directly in your browser.</p>
+                <span class="card-badge">Shell Access</span>
+            </a>
+
+            <a href="/portal/files" class="card">
+                <div class="card-icon">📁</div>
+                <h3>File Manager</h3>
+                <p>Browse, edit, and manage files. Create, delete, and rename files and folders.</p>
+                <span class="card-badge">File System</span>
+            </a>
+        </div>
+
+        <!-- Service Management Panel -->
+        <div class="mgmt-panel">
+            <div class="mgmt-header">
+                <h4>⚙️ Service Management</h4>
+                <button class="btn" onclick="refreshStatus()" id="refreshBtn">
+                    🔄 Refresh
+                </button>
+            </div>
+            <div class="mgmt-body">
+                <!-- Status Grid -->
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-card-label">Shelley Status</div>
+                        <div class="status-card-value checking" id="shelley-status">Checking...</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-label">Current Version</div>
+                        <div class="status-card-value" id="current-version">-</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-label">Latest Version</div>
+                        <div class="status-card-value" id="latest-version">-</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-label">Portal Status</div>
+                        <div class="status-card-value online">Online</div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="startShelley()" id="startBtn">
+                        ▶️ Start Shelley
+                    </button>
+                    <button class="btn btn-danger" onclick="stopShelley()" id="stopBtn">
+                        ⏹️ Stop Shelley
+                    </button>
+                    <button class="btn btn-warning" onclick="restartShelley()" id="restartBtn">
+                        🔄 Restart Shelley
+                    </button>
+                    <button class="btn btn-primary" onclick="checkUpdate()" id="checkUpdateBtn">
+                        🔍 Check Update
+                    </button>
+                    <button class="btn btn-primary" onclick="doUpdate()" id="updateBtn">
+                        ⬆️ Update Now
+                    </button>
+                </div>
+                
+                <!-- Update Info -->
+                <div class="update-info" id="update-info" style="display: none;">
+                    <strong>Update Available!</strong>
+                    <span id="update-details"></span>
+                </div>
+                
+                <!-- Log Output -->
+                <div class="log-box" id="logBox"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const logBox = document.getElementById('logBox');
+        
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const colorClass = `log-${type}`;
+            logBox.innerHTML += `<span class="log-time">[${time}]</span> <span class="${colorClass}">${msg}</span>\n`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+        
+        function clearLog() {
+            logBox.innerHTML = '';
+        }
+        
+        function setButtonLoading(btn, loading) {
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner"></span> Processing...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+            }
+        }
+        
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const resp = await fetch(`/portal/api/mgmt/${endpoint}`, {
+                    method: options.method || 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: options.body ? JSON.stringify(options.body) : undefined
+                });
+                return await resp.json();
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        }
+        
+        async function refreshStatus() {
+            const btn = document.getElementById('refreshBtn');
+            setButtonLoading(btn, true);
+            
+            const statusEl = document.getElementById('shelley-status');
+            const currentVerEl = document.getElementById('current-version');
+            const latestVerEl = document.getElementById('latest-version');
+            
+            statusEl.textContent = 'Checking...';
+            statusEl.className = 'status-card-value checking';
+            
+            const result = await apiCall('status', { method: 'GET' });
+            
+            if (result.shelley_running) {
+                statusEl.textContent = 'Online';
+                statusEl.className = 'status-card-value online';
+            } else {
+                statusEl.textContent = 'Offline';
+                statusEl.className = 'status-card-value offline';
+            }
+            
+            currentVerEl.textContent = result.current_version || 'Unknown';
+            latestVerEl.textContent = result.latest_version || 'Unknown';
+            
+            // Show update info if available
+            const updateInfo = document.getElementById('update-info');
+            if (result.has_update) {
+                updateInfo.style.display = 'block';
+                updateInfo.className = 'update-info has-update';
+                document.getElementById('update-details').textContent = 
+                    ` ${result.current_version} → ${result.latest_version}`;
+            } else {
+                updateInfo.style.display = 'none';
+            }
+            
+            setButtonLoading(btn, false);
+        }
+        
+        async function startShelley() {
+            const btn = document.getElementById('startBtn');
+            setButtonLoading(btn, true);
+            clearLog();
+            log('Starting Shelley...', 'info');
+            
+            const result = await apiCall('start');
+            
+            if (result.success) {
+                log('Shelley started successfully!', 'success');
+                if (result.output) log(result.output, 'info');
+            } else {
+                log(`Failed to start: ${result.error}`, 'error');
+            }
+            
+            setButtonLoading(btn, false);
+            setTimeout(refreshStatus, 2000);
+        }
+        
+        async function stopShelley() {
+            const btn = document.getElementById('stopBtn');
+            setButtonLoading(btn, true);
+            clearLog();
+            log('Stopping Shelley...', 'info');
+            
+            const result = await apiCall('stop');
+            
+            if (result.success) {
+                log('Shelley stopped.', 'success');
+            } else {
+                log(`Failed to stop: ${result.error}`, 'error');
+            }
+            
+            setButtonLoading(btn, false);
+            setTimeout(refreshStatus, 1000);
+        }
+        
+        async function restartShelley() {
+            const btn = document.getElementById('restartBtn');
+            setButtonLoading(btn, true);
+            clearLog();
+            log('Restarting Shelley...', 'info');
+            
+            const result = await apiCall('restart');
+            
+            if (result.success) {
+                log('Shelley restarted successfully!', 'success');
+            } else {
+                log(`Failed to restart: ${result.error}`, 'error');
+            }
+            
+            setButtonLoading(btn, false);
+            setTimeout(refreshStatus, 2000);
+        }
+        
+        async function checkUpdate() {
+            const btn = document.getElementById('checkUpdateBtn');
+            setButtonLoading(btn, true);
+            clearLog();
+            log('Checking for updates...', 'info');
+            
+            const result = await apiCall('check-update');
+            
+            if (result.success) {
+                log(`Current version: ${result.current_version}`, 'info');
+                log(`Latest version: ${result.latest_version}`, 'info');
+                
+                if (result.has_update) {
+                    log('🎉 New version available!', 'warn');
+                    document.getElementById('update-info').style.display = 'block';
+                    document.getElementById('update-info').className = 'update-info has-update';
+                    document.getElementById('update-details').textContent = 
+                        ` ${result.current_version} → ${result.latest_version}`;
+                } else {
+                    log('✅ Already up to date!', 'success');
+                    document.getElementById('update-info').style.display = 'none';
+                }
+            } else {
+                log(`Check failed: ${result.error}`, 'error');
+            }
+            
+            setButtonLoading(btn, false);
+            refreshStatus();
+        }
+        
+        async function doUpdate() {
+            if (!confirm('This will stop Shelley, download the latest version, and restart. Continue?')) {
+                return;
+            }
+            
+            const btn = document.getElementById('updateBtn');
+            setButtonLoading(btn, true);
+            clearLog();
+            log('Starting update process...', 'info');
+            log('This may take a minute...', 'warn');
+            
+            const result = await apiCall('update');
+            
+            if (result.success) {
+                log('Update completed successfully!', 'success');
+                if (result.output) {
+                    result.output.split('\n').forEach(line => {
+                        if (line.trim()) log(line, 'info');
+                    });
+                }
+                document.getElementById('update-info').style.display = 'none';
+            } else {
+                log(`Update failed: ${result.error}`, 'error');
+                if (result.output) log(result.output, 'error');
+            }
+            
+            setButtonLoading(btn, false);
+            setTimeout(refreshStatus, 3000);
+        }
+        
+        // Initial status check
+        refreshStatus();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshStatus, 30000);
+    </script>
+</body>
+</html>

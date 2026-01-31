@@ -1,0 +1,36 @@
+# Binaries
+portal
+shelley_linux_amd64
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Config (may contain secrets)
+shelley.json
+
+# Logs
+*.log
+/tmp/
+
+# Backup files
+*.backup.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Release artifacts
+release/
+*.tar.gz
