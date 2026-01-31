@@ -17,66 +17,94 @@
                         → Service Management (REST API)
 ```
 
-## 快速开始
-
-### 1. 下载 Open Shelley
+## 🚀 一键安装 (推荐)
 
 ```bash
-# 从 GitHub 下载最新版
-curl -L -o shelley_linux_amd64 \
-  https://github.com/boldsoftware/shelley/releases/latest/download/shelley_linux_amd64
-chmod +x shelley_linux_amd64
+# 1. 设置 API Key
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# 2. 运行安装脚本
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/main/install.sh | bash
+
+# 3. 启动服务
+cd ~/openshelley && ./start.sh
 ```
 
-### 2. 编译 Portal
+安装完成后，访问 `http://your-server:8000/login` 并使用显示的 Token 登录。
+
+## 📦 手动安装
+
+### 前置条件
+
+- Go 1.21+
+- curl, jq
+- Anthropic API Key
+
+### 步骤
 
 ```bash
+# 1. 克隆项目
+git clone https://github.com/c21xdx/openshelley.git
+cd openshelley
+
+# 2. 编译 Portal
 go build -o portal main.go
+
+# 3. 下载 Open Shelley
+curl -L -o shelley \
+  https://github.com/boldsoftware/shelley/releases/latest/download/shelley_linux_amd64
+chmod +x shelley
+
+# 4. 启动
+export ANTHROPIC_API_KEY="sk-ant-..."
+export PORTAL_TOKEN="your-secret-token"
+
+./shelley -db ./shelley.db serve -port 9001 &
+SHELLEY_URL=http://localhost:9001 ./portal
 ```
 
-### 3. 启动服务
+## 📁 文件结构
 
-```bash
-# 设置环境变量
-export ANTHROPIC_API_KEY="sk-ant-..."  # 必需
-export PORTAL_TOKEN="your-secure-token" # 可选，不设置会自动生成
+安装后的目录结构：
 
-# 启动 Open Shelley (后台)
-./shelley_linux_amd64 -db ./shelley.db serve -port 9001 &
-
-# 启动 Portal
-./portal
+```
+~/openshelley/
+├── shelley              # Open Shelley 二进制
+├── portal               # Portal 二进制
+├── static/              # 前端页面
+├── data/
+│   ├── shelley.db       # 数据库
+│   └── shelley.json     # 配置文件
+├── .env                 # 环境变量 (API Key, Token 等)
+├── start.sh             # 启动脚本
+├── stop.sh              # 停止脚本
+├── status.sh            # 状态检查
+├── update-shelley.sh    # 更新脚本
+└── *.service            # systemd 服务文件
 ```
 
-### 4. 访问
-
-- 登录页: http://localhost:8000/login
-- Portal: http://localhost:8000/portal
-- Shelley: http://localhost:8000/
-
-## 环境变量
-
-### Portal
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `PORTAL_TOKEN` | 登录认证 token | 自动生成 |
-| `PORTAL_PORT` | 端口号 | 8000 |
-| `SHELLEY_URL` | Open Shelley 地址 | http://localhost:9001 |
-
-### Open Shelley
-| 变量 | 说明 |
-|------|------|
-| `ANTHROPIC_API_KEY` | Anthropic API 密钥 (必需) |
-
-## 使用 Systemd 部署
+## 🛠️ 常用命令
 
 ```bash
-# 编辑服务文件，填入你的密钥
-vim openshelley.service  # 修改 ANTHROPIC_API_KEY
-vim portal.service       # 修改 PORTAL_TOKEN
+cd ~/openshelley
 
-# 安装服务
-sudo cp openshelley.service portal.service /etc/systemd/system/
+# 启动/停止/状态
+./start.sh
+./stop.sh
+./status.sh
+
+# 更新 Shelley
+./update-shelley.sh           # 检查并更新
+./update-shelley.sh --check   # 仅检查
+./update-shelley.sh --force   # 强制更新
+```
+
+## 🔧 Systemd 部署
+
+如果希望服务开机自启：
+
+```bash
+sudo cp ~/openshelley/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable openshelley portal
 sudo systemctl start openshelley portal
@@ -86,20 +114,25 @@ journalctl -u openshelley -f
 journalctl -u portal -f
 ```
 
-## 自动更新
+## ⚙️ 环境变量
 
-```bash
-# 检查更新
-./update-shelley.sh --check
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `ANTHROPIC_API_KEY` | Anthropic API 密钥 | (必需) |
+| `PORTAL_TOKEN` | 登录认证 token | 自动生成 |
+| `PORTAL_PORT` | Portal 端口 | 8000 |
+| `SHELLEY_PORT` | Shelley 内部端口 | 9001 |
+| `SHELLEY_URL` | Shelley 地址 | http://localhost:9001 |
+| `BASE_DIR` | 安装目录 | (自动检测) |
 
-# 执行更新
-./update-shelley.sh
+## 🔐 安全建议
 
-# 强制更新
-./update-shelley.sh --force
-```
+1. 使用强 token（安装脚本会自动生成）
+2. 防火墙仅开放 Portal 端口 (8000)
+3. 生产环境配置 HTTPS（nginx 反向代理）
+4. 保护好 `.env` 文件
 
-## 功能截图
+## 📸 功能截图
 
 ### Portal 首页
 - 系统状态监控
@@ -108,21 +141,13 @@ journalctl -u portal -f
 
 ### Web 终端
 - 完整的 xterm.js 终端
-- 支持 256 色
-- 支持窗口调整大小
+- 支持 256 色和窗口调整
 
 ### 文件管理器
 - 文件浏览和编辑
 - CodeMirror 语法高亮
 - 创建/删除/重命名
 
-## 安全建议
-
-1. 使用强 token（长随机字符串）
-2. 防火墙仅开放 8000 端口
-3. 生产环境配置 HTTPS（使用 nginx 反向代理）
-4. 保护好 ANTHROPIC_API_KEY
-
-## 许可证
+## 📄 License
 
 MIT License

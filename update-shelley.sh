@@ -1,24 +1,42 @@
 #!/bin/bash
 #
 # Open Shelley 自动更新脚本
-# 用法: ./update-shelley.sh [--force]
+# 用法: ./update-shelley.sh [--force] [--check]
 #
 
 set -e
 
-# 配置
-INSTALL_DIR="/home/exedev/002"
-BINARY_NAME="shelley_linux_amd64"
+# 配置 - 自动检测安装目录
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+INSTALL_DIR="${INSTALL_DIR:-$SCRIPT_DIR}"
+
+# 尝试加载 .env
+[[ -f "$INSTALL_DIR/.env" ]] && source "$INSTALL_DIR/.env"
+
+BINARY_NAME="shelley"
 BINARY_PATH="$INSTALL_DIR/$BINARY_NAME"
 GITHUB_REPO="boldsoftware/shelley"
-ARCH="linux_amd64"  # 或 linux_arm64, darwin_amd64, darwin_arm64
+SHELLEY_PORT="${SHELLEY_PORT:-9001}"
+
+# 检测架构
+detect_arch() {
+    local arch=$(uname -m)
+    local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    case $arch in
+        x86_64)  arch="amd64" ;;
+        aarch64|arm64) arch="arm64" ;;
+    esac
+    echo "${os}_${arch}"
+}
+
+ARCH=$(detect_arch)
 
 # 颜色
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
@@ -54,8 +72,8 @@ update_shelley() {
     local force="$1"
     
     log_info "检查 Open Shelley 更新..."
+    log_info "安装目录: $INSTALL_DIR"
     
-    # 获取版本信息
     local current_version=$(get_current_version)
     local release_info=$(get_latest_release)
     local latest_version=$(echo "$release_info" | jq -r '.tag_name')
@@ -69,94 +87,77 @@ update_shelley() {
     log_info "当前版本: $current_version"
     log_info "最新版本: $latest_version"
     
-    # 检查是否需要更新
     if [[ "$current_version" == "$latest_version" && "$force" != "--force" ]]; then
         log_success "已经是最新版本!"
         exit 0
     fi
     
-    if [[ "$force" == "--force" ]]; then
-        log_warn "强制更新模式"
-    fi
+    [[ "$force" == "--force" ]] && log_warn "强制更新模式"
     
     log_info "下载新版本..."
-    log_info "URL: $download_url"
-    
-    # 创建临时文件
     local tmp_file=$(mktemp)
     
-    # 下载
     if ! curl -L -o "$tmp_file" "$download_url"; then
         log_error "下载失败"
         rm -f "$tmp_file"
         exit 1
     fi
     
-    # 验证下载的文件
-    if ! file "$tmp_file" | grep -q "ELF 64-bit"; then
+    # 验证文件
+    if ! file "$tmp_file" | grep -qE "ELF|Mach-O"; then
         log_error "下载的文件不是有效的二进制文件"
         rm -f "$tmp_file"
         exit 1
     fi
     
     # 停止服务
-    log_info "停止 Open Shelley 服务..."
-    pkill -f "shelley_linux_amd64.*9001" 2>/dev/null || true
+    log_info "停止 Shelley 服务..."
+    pkill -f "shelley.*serve.*$SHELLEY_PORT" 2>/dev/null || true
     sleep 2
     
-    # 备份旧版本
+    # 备份
     if [[ -f "$BINARY_PATH" ]]; then
         local backup_path="${BINARY_PATH}.backup.$(date +%Y%m%d_%H%M%S)"
-        log_info "备份旧版本到: $backup_path"
+        log_info "备份: $backup_path"
         cp "$BINARY_PATH" "$backup_path"
     fi
     
-    # 安装新版本
+    # 安装
     log_info "安装新版本..."
     mv "$tmp_file" "$BINARY_PATH"
     chmod +x "$BINARY_PATH"
     
-    # 验证安装
     local new_version=$($BINARY_PATH version 2>/dev/null | jq -r '.tag' 2>/dev/null || echo "unknown")
     log_success "已更新到: $new_version"
     
-    # 重启服务
-    log_info "重启 Open Shelley 服务..."
-    cd /home/exedev/002/openshelley
-    nohup $BINARY_PATH \
-        -db ./shelley.db \
-        -config ./shelley.json \
-        -default-model claude-sonnet-4-20250514 \
-        serve -port 9001 > /tmp/openshelley.log 2>&1 &
+    # 重启
+    log_info "重启 Shelley 服务..."
+    if [[ -f "$INSTALL_DIR/start.sh" ]]; then
+        cd "$INSTALL_DIR"
+        ./stop.sh 2>/dev/null || true
+        ./start.sh
+    else
+        # 回退: 直接启动
+        cd "$INSTALL_DIR/data" 2>/dev/null || cd "$INSTALL_DIR"
+        nohup $BINARY_PATH \
+            -db ./shelley.db \
+            -config ./shelley.json \
+            serve -port $SHELLEY_PORT > /tmp/openshelley.log 2>&1 &
+    fi
     
     sleep 2
     
-    # 检查服务是否启动
-    if pgrep -f "shelley_linux_amd64.*9001" > /dev/null; then
-        log_success "Open Shelley 服务已启动"
+    if pgrep -f "shelley.*serve" > /dev/null; then
+        log_success "Shelley 服务已启动"
     else
         log_error "服务启动失败，请检查日志: /tmp/openshelley.log"
         exit 1
     fi
     
+    # 清理旧备份
+    ls -t ${BINARY_PATH}.backup.* 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null || true
+    
     log_success "更新完成!"
-}
-
-# 显示帮助
-show_help() {
-    echo "Open Shelley 更新脚本"
-    echo ""
-    echo "用法: $0 [选项]"
-    echo ""
-    echo "选项:"
-    echo "  --force     强制更新，即使版本相同"
-    echo "  --check     仅检查是否有更新，不执行更新"
-    echo "  --help      显示此帮助信息"
-    echo ""
-    echo "示例:"
-    echo "  $0              # 检查并更新"
-    echo "  $0 --force      # 强制重新安装最新版"
-    echo "  $0 --check      # 仅检查更新"
 }
 
 # 仅检查更新
@@ -182,37 +183,26 @@ check_only() {
     fi
 }
 
-# 清理旧备份（保留最近3个）
-cleanup_backups() {
-    log_info "清理旧备份..."
-    ls -t ${BINARY_PATH}.backup.* 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null || true
-    log_success "清理完成"
+show_help() {
+    echo "Open Shelley 更新脚本"
+    echo ""
+    echo "用法: $0 [选项]"
+    echo ""
+    echo "选项:"
+    echo "  --force     强制更新"
+    echo "  --check     仅检查更新"
+    echo "  --help      显示帮助"
 }
 
-# 主入口
 main() {
     check_deps
     
     case "${1:-}" in
-        --help|-h)
-            show_help
-            ;;
-        --check)
-            check_only
-            ;;
-        --force)
-            update_shelley "--force"
-            cleanup_backups
-            ;;
-        "")
-            update_shelley
-            cleanup_backups
-            ;;
-        *)
-            log_error "未知选项: $1"
-            show_help
-            exit 1
-            ;;
+        --help|-h) show_help ;;
+        --check)   check_only ;;
+        --force)   update_shelley "--force" ;;
+        "")        update_shelley ;;
+        *)         log_error "未知选项: $1"; show_help; exit 1 ;;
     esac
 }
 

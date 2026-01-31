@@ -33,7 +33,7 @@ var (
 	authToken   string
 	shelleyURL  = "http://localhost:9001" // 开源Shelley内部端口
 	portalPort  = "8000"
-	baseDir     = "/home/exedev/002"
+	baseDir     string
 	mgmtMutex   sync.Mutex
 )
 
@@ -59,6 +59,13 @@ func main() {
 
 	if envShelley := os.Getenv("SHELLEY_URL"); envShelley != "" {
 		shelleyURL = envShelley
+	}
+
+	// Get base directory from env or use executable's parent directory
+	baseDir = os.Getenv("BASE_DIR")
+	if baseDir == "" {
+		exePath, _ := os.Executable()
+		baseDir = filepath.Dir(exePath)
 	}
 
 	log.Printf("Portal starting on port %s", portalPort)
