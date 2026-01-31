@@ -197,6 +197,57 @@
             border: 1px solid #fde047;
         }
         
+        .rollback-panel {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .rollback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .backup-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .backup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .backup-item:hover {
+            border-color: var(--primary);
+        }
+        .backup-info {
+            flex: 1;
+        }
+        .backup-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .backup-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .backup-actions {
+            margin-left: 12px;
+        }
+        .no-backups {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+        
         .spinner {
             width: 16px;
             height: 16px;
@@ -290,12 +341,26 @@
                     <button class="btn btn-primary" onclick="doUpdate()" id="updateBtn">
                         ⬆️ Update Now
                     </button>
+                    <button class="btn btn-warning" onclick="showBackups()" id="backupsBtn">
+                        ⏮️ Rollback
+                    </button>
                 </div>
                 
                 <!-- Update Info -->
                 <div class="update-info" id="update-info" style="display: none;">
                     <strong>Update Available!</strong>
                     <span id="update-details"></span>
+                </div>
+                
+                <!-- Rollback Panel -->
+                <div class="rollback-panel" id="rollback-panel" style="display: none;">
+                    <div class="rollback-header">
+                        <strong>⏮️ Available Backups</strong>
+                        <button class="btn" onclick="hideBackups()" style="padding: 4px 8px; font-size: 12px;">✖ Close</button>
+                    </div>
+                    <div class="backup-list" id="backup-list">
+                        Loading...
+                    </div>
                 </div>
                 
                 <!-- Log Output -->
@@ -497,6 +562,68 @@
         
         // Initial status check
         refreshStatus();
+        
+        async function showBackups() {
+            const panel = document.getElementById('rollback-panel');
+            const list = document.getElementById('backup-list');
+            
+            panel.style.display = 'block';
+            list.innerHTML = 'Loading...';
+            
+            const result = await apiCall('backups', { method: 'GET' });
+            
+            if (!result.success) {
+                list.innerHTML = `<div class="no-backups">Error: ${result.error}</div>`;
+                return;
+            }
+            
+            if (!result.backups || result.backups.length === 0) {
+                list.innerHTML = '<div class="no-backups">No backups available.<br>Backups are created automatically when you update.</div>';
+                return;
+            }
+            
+            list.innerHTML = result.backups.map(b => `
+                <div class="backup-item">
+                    <div class="backup-info">
+                        <div class="backup-name">${b.name}</div>
+                        <div class="backup-meta">${b.modTime} • ${(b.size / 1024 / 1024).toFixed(1)} MB</div>
+                    </div>
+                    <div class="backup-actions">
+                        <button class="btn btn-warning" onclick="doRollback('${b.name}')" style="padding: 6px 12px; font-size: 12px;">
+                            ⏮️ Restore
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function hideBackups() {
+            document.getElementById('rollback-panel').style.display = 'none';
+        }
+        
+        async function doRollback(backupName) {
+            if (!confirm(`Are you sure you want to rollback to ${backupName}?\n\nThis will:\n1. Stop Shelley\n2. Backup current version\n3. Restore the selected version\n4. Restart Shelley`)) {
+                return;
+            }
+            
+            clearLog();
+            log(`Rolling back to ${backupName}...`, 'warn');
+            
+            const result = await apiCall('rollback', {
+                method: 'POST',
+                body: { backup_name: backupName }
+            });
+            
+            if (result.success) {
+                log(`Rollback successful!`, 'success');
+                log(`Restored version: ${result.version || 'unknown'}`, 'info');
+                hideBackups();
+            } else {
+                log(`Rollback failed: ${result.error}`, 'error');
+            }
+            
+            setTimeout(refreshStatus, 2000);
+        }
         
         // Auto-refresh every 30 seconds
         setInterval(refreshStatus, 30000);

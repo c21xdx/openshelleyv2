@@ -97,6 +97,8 @@ func main() {
 	mux.HandleFunc("/portal/api/mgmt/restart", authMiddleware(handleMgmtRestart))
 	mux.HandleFunc("/portal/api/mgmt/check-update", authMiddleware(handleMgmtCheckUpdate))
 	mux.HandleFunc("/portal/api/mgmt/update", authMiddleware(handleMgmtUpdate))
+	mux.HandleFunc("/portal/api/mgmt/backups", authMiddleware(handleMgmtBackups))
+	mux.HandleFunc("/portal/api/mgmt/rollback", authMiddleware(handleMgmtRollback))
 
 	// WebSocket for terminal
 	mux.HandleFunc("/portal/ws/terminal", authMiddleware(handleTerminalWS))
@@ -603,6 +605,166 @@ func handleMgmtUpdate(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"output":  output,
 	})
+}
+
+// List available backups
+func handleMgmtBackups(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	
+	binaryPath := filepath.Join(baseDir, "shelley")
+	pattern := binaryPath + ".backup.*"
+	
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+	
+	type BackupInfo struct {
+		Name    string `json:"name"`
+		Path    string `json:"path"`
+		Size    int64  `json:"size"`
+		ModTime string `json:"modTime"`
+	}
+	
+	backups := make([]BackupInfo, 0)
+	for _, match := range matches {
+		info, err := os.Stat(match)
+		if err != nil {
+			continue
+		}
+		backups = append(backups, BackupInfo{
+			Name:    filepath.Base(match),
+			Path:    match,
+			Size:    info.Size(),
+			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
+		})
+	}
+	
+	// Sort by modification time (newest first)
+	sort.Slice(backups, func(i, j int) bool {
+		return backups[i].ModTime > backups[j].ModTime
+	})
+	
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"backups": backups,
+	})
+}
+
+// Rollback to a specific backup
+func handleMgmtRollback(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	mgmtMutex.Lock()
+	defer mgmtMutex.Unlock()
+	
+	var req struct {
+		BackupName string `json:"backup_name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Invalid request",
+		})
+		return
+	}
+	
+	binaryPath := filepath.Join(baseDir, "shelley")
+	backupPath := filepath.Join(baseDir, req.BackupName)
+	
+	// Verify backup exists and is a valid backup file
+	if !strings.HasPrefix(req.BackupName, "shelley.backup.") {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Invalid backup name",
+		})
+		return
+	}
+	
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Backup not found",
+		})
+		return
+	}
+	
+	// Stop Shelley
+	exec.Command("pkill", "-f", "shelley.*serve").Run()
+	time.Sleep(2 * time.Second)
+	
+	// Backup current binary before rollback
+	currentBackup := binaryPath + ".before-rollback." + time.Now().Format("20060102_150405")
+	if _, err := os.Stat(binaryPath); err == nil {
+		if err := copyFile(binaryPath, currentBackup); err != nil {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"error":   "Failed to backup current binary: " + err.Error(),
+			})
+			return
+		}
+	}
+	
+	// Copy backup to binary
+	if err := copyFile(backupPath, binaryPath); err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Failed to restore backup: " + err.Error(),
+		})
+		return
+	}
+	
+	// Make executable
+	os.Chmod(binaryPath, 0755)
+	
+	// Restart Shelley
+	scriptPath := filepath.Join(baseDir, "start.sh")
+	if _, err := os.Stat(scriptPath); err == nil {
+		cmd := exec.Command("bash", scriptPath)
+		cmd.Dir = baseDir
+		cmd.Start()
+	}
+	
+	time.Sleep(2 * time.Second)
+	
+	// Get version of restored binary
+	var version string
+	cmd := exec.Command(binaryPath, "version")
+	if output, err := cmd.Output(); err == nil {
+		var ver struct {
+			Tag string `json:"tag"`
+		}
+		if json.Unmarshal(output, &ver) == nil {
+			version = ver.Tag
+		}
+	}
+	
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Rolled back to " + req.BackupName,
+		"version": version,
+	})
+}
+
+// Helper function to copy file
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+	
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+	
+	_, err = io.Copy(destFile, sourceFile)
+	return err
 }
 
 // Portal button HTML/CSS to inject into Shelley pages
