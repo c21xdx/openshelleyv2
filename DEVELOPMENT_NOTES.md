@@ -25,13 +25,15 @@
 
 ## 分支说明
 
-| 分支 | 目标架构 | 推荐配置 | 说明 |
-|------|----------|----------|------|
-| `main` | AMD64 (x86_64) | 1GB RAM + 2GB Swap | 含 LOW_MEMORY.md |
-| `arm` | ARM64 (aarch64) | 2GB+ RAM | 甲骨文 ARM 实例优化 |
+| 分支 | 目标架构 | 推荐配置 | 浏览器 | 说明 |
+|------|----------|----------|--------|------|
+| `main` | AMD64 | 1GB RAM + 2GB Swap | chromium-browser | 稳定版 |
+| `arm` | ARM64 | 2GB+ RAM | chromium-browser | 甲骨文 ARM |
+| `headless-shell` | AMD64 | 1GB RAM + 2GB Swap | Chrome Headless Shell | Google 官方版 |
 
 ## 文件结构
 
+### GitHub 仓库
 ```
 github-repo/
 ├── main.go              # Portal 源码 (Go)
@@ -42,11 +44,33 @@ github-repo/
 │   ├── terminal.html    # Web 终端
 │   └── files.html       # 文件管理器
 ├── install.sh           # 一键安装脚本
+├── install-headless-shell.sh  # Chrome Headless Shell 安装 (headless-shell 分支)
 ├── update-shelley.sh    # Shelley 更新脚本
 ├── AGENTS.md            # AI Agent 工作指南
+├── DEVELOPMENT_NOTES.md # 开发总结
 ├── LOW_MEMORY.md        # 低内存优化 (main 分支)
 ├── ARM64.md             # ARM64 说明 (arm 分支)
+├── HEADLESS_SHELL.md    # Headless Shell 说明 (headless-shell 分支)
 └── README.md            # 项目说明
+```
+
+### 安装后目录
+```
+~/openshelley/
+├── shelley              # Shelley 二进制
+├── portal               # Portal 二进制
+├── static/              # 前端页面
+├── data/                # 数据目录
+│   ├── shelley.db       # 数据库
+│   └── shelley.json     # 配置
+├── .env                 # 环境变量 (Token, API Key 等)
+├── start.sh             # 启动脚本
+├── stop.sh              # 停止脚本
+├── status.sh            # 状态检查
+├── token.sh             # 查看 Token
+├── update-shelley.sh    # 更新脚本
+├── AGENTS.md            # Agent 指南
+└── *.service            # systemd 服务文件
 ```
 
 ## 环境变量
@@ -108,7 +132,8 @@ cd ~/openshelley
 
 ./start.sh              # 启动服务
 ./stop.sh               # 停止服务
-./status.sh             # 查看状态
+./status.sh             # 查看状态 (含 Token)
+./token.sh              # 快速查看 Token
 ./update-shelley.sh     # 更新 Shelley
 ./update-shelley.sh --check   # 仅检查更新
 ```
@@ -226,12 +251,17 @@ cp shelley.backup.20260131_120000 shelley
 
 **想法**: 使用精简版 Chrome 节省内存
 
-**测试结果**:
+**测试结果** (Chromium 快照版):
 - 内存节省有限 (~50-100 MB)
 - 中文字体需额外处理
-- 从 Chromium 快照下载，稳定性不如 apt
+- 稳定性不如 apt
 
-**结论**: 收益不大，使用官方 chromium-browser 更可靠
+**后续发现**: Google 官方提供 Chrome for Testing
+- 来源: https://googlechromelabs.github.io/chrome-for-testing/
+- 稳定版，跟随 Chrome 发布
+- 创建了 `headless-shell` 分支
+
+**结论**: 主分支使用 chromium-browser，想用官方 headless-shell 可切换到 headless-shell 分支
 
 ## Token 优化建议
 
@@ -269,3 +299,21 @@ cp shelley.backup.20260131_120000 shelley
   - 新增 `/portal/api/mgmt/backups` API 列出备份
   - 新增 `/portal/api/mgmt/rollback` API 执行回退
   - 回退前自动备份当前版本
+
+- **2026-02-02**: headless-shell 分支
+  - 新增 `headless-shell` 分支，使用 Google 官方 Chrome Headless Shell
+  - 来源: https://googlechromelabs.github.io/chrome-for-testing/
+  - 仅支持 AMD64
+
+- **2026-02-02**: Bug 修复和优化
+  - 修复文件管理器默认路径硬编码问题 (改为 $HOME)
+  - 修复启动/停止脚本名称不一致问题
+  - 修复二进制文件名称不一致问题 (shelley vs shelley_linux_amd64)
+  - Portal 按钮移到顶部中央，避免遮挡 Shelley UI
+  - 新增 Show Token 按钮，方便查看登录 Token
+  - 新增 token.sh 脚本快速获取 Token
+  - install.sh 自动复制 AGENTS.md 到安装目录
+  - AGENTS.md 新增规则：完成后不显示完整代码
+
+- **2026-02-02**: 中文乱码修复
+  - 截图中文乱码需安装字体: `sudo apt install -y fonts-noto-cjk`
