@@ -780,8 +780,9 @@ const portalButtonHTML = `
 <style>
 #portal-nav-btn {
     position: fixed;
-    bottom: 12px;
-    left: 12px;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 9999;
     padding: 8px 16px;
     background: #2563eb;
