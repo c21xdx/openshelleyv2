@@ -120,6 +120,7 @@ download_portal() {
     # 复制需要的文件
     cp -r static "$INSTALL_DIR/"
     cp update-shelley.sh "$INSTALL_DIR/"
+    cp AGENTS.md "$INSTALL_DIR/" 2>/dev/null || true
     chmod +x "$INSTALL_DIR/update-shelley.sh"
     
     rm -rf "$tmp_dir"
