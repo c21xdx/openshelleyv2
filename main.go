@@ -91,6 +91,7 @@ func main() {
 
 	// Management API endpoints
 	mux.HandleFunc("/portal/api/mgmt/status", authMiddleware(handleMgmtStatus))
+	mux.HandleFunc("/portal/api/mgmt/token", authMiddleware(handleMgmtToken))
 	mux.HandleFunc("/portal/api/mgmt/start", authMiddleware(handleMgmtStart))
 	mux.HandleFunc("/portal/api/mgmt/stop", authMiddleware(handleMgmtStop))
 	mux.HandleFunc("/portal/api/mgmt/restart", authMiddleware(handleMgmtRestart))
@@ -436,6 +437,13 @@ func getLatestVersion() (string, error) {
 		return "", err
 	}
 	return release.TagName, nil
+}
+
+func handleMgmtToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": authToken,
+	})
 }
 
 func handleMgmtStatus(w http.ResponseWriter, r *http.Request) {

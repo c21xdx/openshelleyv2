@@ -344,6 +344,9 @@
                     <button class="btn btn-warning" onclick="showBackups()" id="backupsBtn">
                         ⏮️ Rollback
                     </button>
+                    <button class="btn" onclick="showToken()" id="tokenBtn">
+                        🔑 Show Token
+                    </button>
                 </div>
                 
                 <!-- Update Info -->
@@ -562,6 +565,17 @@
         
         // Initial status check
         refreshStatus();
+        
+        async function showToken() {
+            const result = await apiCall('token', { method: 'GET' });
+            if (result.token) {
+                clearLog();
+                log('Portal Token:', 'info');
+                log(result.token, 'success');
+                log('', 'info');
+                log('Use this token to login at /login', 'info');
+            }
+        }
         
         async function showBackups() {
             const panel = document.getElementById('rollback-panel');
