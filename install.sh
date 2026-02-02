@@ -224,8 +224,16 @@ echo ""
 echo "🔑 Portal Token: $PORTAL_TOKEN"
 echo "🔗 访问地址: http://localhost:$PORTAL_PORT/login"
 EOF
+
+    # token.sh - 快速查看 Token
+    cat > "$INSTALL_DIR/token.sh" <<'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+source .env
+echo "$PORTAL_TOKEN"
+EOF
     
-    chmod +x "$INSTALL_DIR"/{start.sh,stop.sh,status.sh}
+    chmod +x "$INSTALL_DIR"/{start.sh,stop.sh,status.sh,token.sh}
     log_success "启动脚本创建完成"
 }
 
