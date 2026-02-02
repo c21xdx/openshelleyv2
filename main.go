@@ -7,7 +7,6 @@ import (
 	"embed"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -279,7 +278,7 @@ func handleFilesAPI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	path := strings.TrimPrefix(r.URL.Path, "/portal/api/files")
 	if path == "" || path == "/" {
-		path = "/home/exedev"
+		path = os.Getenv("HOME")
 	}
 
 	switch r.Method {
@@ -401,13 +400,13 @@ func handleFileAPI(w http.ResponseWriter, r *http.Request) {
 
 // Check if Shelley process is running
 func isShelleyRunning() bool {
-	cmd := exec.Command("pgrep", "-f", "shelley_linux_amd64.*9001")
+	cmd := exec.Command("pgrep", "-f", "shelley.*serve")
 	return cmd.Run() == nil
 }
 
 // Get current Shelley version
 func getCurrentVersion() string {
-	binaryPath := filepath.Join(baseDir, "shelley_linux_amd64")
+	binaryPath := filepath.Join(baseDir, "shelley")
 	cmd := exec.Command(binaryPath, "version")
 	output, err := cmd.Output()
 	if err != nil {
@@ -473,11 +472,11 @@ func handleMgmtStart(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Start Shelley using the start script
-	scriptPath := filepath.Join(baseDir, "start-openshelley.sh")
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("nohup %s > /tmp/openshelley.log 2>&1 &", scriptPath))
-	cmd.Dir = filepath.Join(baseDir, "openshelley")
+	scriptPath := filepath.Join(baseDir, "start.sh")
+	cmd := exec.Command("bash", scriptPath)
+	cmd.Dir = baseDir
 	
-	if err := cmd.Run(); err != nil {
+	if err := cmd.Start(); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
 			"error":   err.Error(),
@@ -486,7 +485,7 @@ func handleMgmtStart(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Wait a bit for process to start
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	
 	if isShelleyRunning() {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -496,7 +495,7 @@ func handleMgmtStart(w http.ResponseWriter, r *http.Request) {
 	} else {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
-			"error":   "Process failed to start. Check /tmp/openshelley.log",
+			"error":   "Process failed to start. Check logs.",
 		})
 	}
 }
@@ -506,7 +505,7 @@ func handleMgmtStop(w http.ResponseWriter, r *http.Request) {
 	mgmtMutex.Lock()
 	defer mgmtMutex.Unlock()
 	
-	cmd := exec.Command("pkill", "-f", "shelley_linux_amd64.*9001")
+	cmd := exec.Command("pkill", "-f", "shelley.*serve")
 	cmd.Run() // Ignore error if not running
 	
 	time.Sleep(1 * time.Second)
@@ -522,15 +521,16 @@ func handleMgmtRestart(w http.ResponseWriter, r *http.Request) {
 	defer mgmtMutex.Unlock()
 	
 	// Stop
-	exec.Command("pkill", "-f", "shelley_linux_amd64.*9001").Run()
+	stopScript := filepath.Join(baseDir, "stop.sh")
+	exec.Command("bash", stopScript).Run()
 	time.Sleep(2 * time.Second)
 	
 	// Start
-	scriptPath := filepath.Join(baseDir, "start-openshelley.sh")
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("nohup %s > /tmp/openshelley.log 2>&1 &", scriptPath))
-	cmd.Dir = filepath.Join(baseDir, "openshelley")
+	startScript := filepath.Join(baseDir, "start.sh")
+	cmd := exec.Command("bash", startScript)
+	cmd.Dir = baseDir
 	
-	if err := cmd.Run(); err != nil {
+	if err := cmd.Start(); err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
 			"error":   err.Error(),
@@ -538,7 +538,7 @@ func handleMgmtRestart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	
 	if isShelleyRunning() {
 		json.NewEncoder(w).Encode(map[string]interface{}{
