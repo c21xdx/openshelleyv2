@@ -29,6 +29,15 @@ if [[ "$ARCH" != "x86_64" ]]; then
     exit 1
 fi
 
+# 检查依赖
+for cmd in curl jq unzip; do
+    if ! command -v $cmd &> /dev/null; then
+        log_info "安装缺少的依赖: $cmd"
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq $cmd
+    fi
+done
+
 log_info "获取最新稳定版本信息..."
 
 # 获取最新版本
