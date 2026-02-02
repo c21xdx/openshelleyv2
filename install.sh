@@ -46,11 +46,12 @@ check_deps() {
         exit 1
     fi
     
-    # 检查浏览器 (可选但推荐)
-    if ! command -v chromium-browser &> /dev/null && ! command -v chromium &> /dev/null && ! command -v google-chrome &> /dev/null; then
-        log_warn "未检测到 Chromium/Chrome 浏览器"
-        log_warn "浏览器工具将不可用 (browser_navigate, browser_screenshot 等)"
-        log_info "安装浏览器: sudo apt install chromium-browser"
+    # 检查浏览器
+    if ! command -v headless-shell &> /dev/null && ! command -v chromium-browser &> /dev/null && ! command -v chromium &> /dev/null && ! command -v google-chrome &> /dev/null; then
+        log_warn "未检测到浏览器"
+        log_info "AMD64 推荐安装 Chrome Headless Shell:"
+        log_info "  curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install-headless-shell.sh | bash"
+        log_info "或者: sudo apt install chromium-browser"
         echo ""
     fi
     

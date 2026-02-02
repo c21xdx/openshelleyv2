@@ -1,4 +1,6 @@
-# Open Shelley Portal
+# Open Shelley Portal (Headless Shell 版)
+
+> 此分支使用 Google 官方 Chrome Headless Shell，仅支持 AMD64
 
 一个为 [Open Shelley](https://github.com/boldsoftware/shelley) 设计的 Web 门户，提供：
 
@@ -17,16 +19,19 @@
                         → Service Management (REST API)
 ```
 
-## 🚀 一键安装 (推荐)
+## 🚀 一键安装 (AMD64)
 
 ```bash
-# 1. 设置 API Key
+# 1. 安装 Chrome Headless Shell (官方稳定版)
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install-headless-shell.sh | bash
+
+# 2. 设置 API Key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
-# 2. 运行安装脚本
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/main/install.sh | bash
+# 3. 运行安装脚本
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install.sh | bash
 
-# 3. 启动服务
+# 4. 启动服务
 cd ~/openshelley && ./start.sh
 ```
 
