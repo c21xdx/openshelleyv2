@@ -96,30 +96,8 @@ create_dirs() {
     git config user.email "agent@local"
     git config user.name "Agent"
     
-    cat > AGENTS.md << 'AGENTSEOF'
-# AI Agent 工作指南
-
-## 工作方式
-- 遇到错误自己调试修复，不要问我
-- 代码简单易懂，加中文注释
-- 不要问确认问题，直接做
-
-## 减少 Token（重要！）
-
-### 截图
-- ❌ 不要频繁截图（每张 ~1500 token）
-- ✅ 用 curl 检查: `curl -s http://localhost:8000/ | head -50`
-
-### 文件操作
-- 先 `ls`，不要盲目 cat
-- 用 `head -50` 预览
-- 用 `grep` 搜索
-- 用 patch 精确修改
-
-## 完成后
-- 简要说明做了什么
-- 告诉我怎么运行
-AGENTSEOF
+    # 下载项目的 AGENTS.md
+    curl -sL "https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/AGENTS.md" -o AGENTS.md
     
     git add AGENTS.md
     git commit -q -m "init with AGENTS.md"
