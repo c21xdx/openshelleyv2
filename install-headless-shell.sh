@@ -66,7 +66,34 @@ unzip -o chrome-headless-shell.zip
 # 安装依赖
 log_info "安装依赖..."
 sudo apt-get update -qq
-sudo apt-get install -y -qq libnspr4 libnss3 libexpat1 libfontconfig1 libuuid1 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 2>/dev/null || true
+
+# 检测 Ubuntu 版本，24.04+ 部分包名有变化
+UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null || echo "22.04")
+log_info "检测到系统版本: Ubuntu $UBUNTU_VERSION"
+
+# 基础依赖 (所有版本通用)
+BASE_DEPS="libnspr4 libnss3 libexpat1 libfontconfig1 libuuid1 \
+    libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
+    libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+    libpango-1.0-0 libcairo2 libx11-6 libx11-xcb1 libxcb1 \
+    libxext6 libxshmfence1 libglib2.0-0 libdbus-1-3 \
+    fonts-liberation libvulkan1 xdg-utils ca-certificates"
+
+# Ubuntu 24.04+ 特定依赖 (包名变化)
+if [[ "$UBUNTU_VERSION" == "24.04"* ]] || [[ "${UBUNTU_VERSION%%.*}" -ge 24 ]]; then
+    log_info "使用 Ubuntu 24.04+ 依赖包名..."
+    AUDIO_DEP="libasound2t64"
+else
+    AUDIO_DEP="libasound2"
+fi
+
+# 安装依赖
+sudo apt-get install -y -qq $BASE_DEPS $AUDIO_DEP 2>/dev/null || {
+    log_warn "部分依赖安装失败，尝试逐个安装..."
+    for pkg in $BASE_DEPS $AUDIO_DEP; do
+        sudo apt-get install -y -qq $pkg 2>/dev/null || log_warn "跳过: $pkg"
+    done
+}
 
 # 安装
 log_info "安装到 /opt/chrome-headless-shell..."
