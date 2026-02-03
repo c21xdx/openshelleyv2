@@ -1,7 +1,7 @@
 # Open Shelley Portal 开发总结
 
 > 创建时间: 2026-01-31
-> 项目地址: https://github.com/c21xdx/openshelley
+> 项目地址: https://github.com/c21xdx/openshelleyv2
 
 ---
 
@@ -103,7 +103,7 @@ sudo apt install -y chromium-browser
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # 4. 一键安装
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/install.sh | bash
 
 # 5. 启动
 cd ~/openshelley && ./start.sh
@@ -119,7 +119,7 @@ sudo apt install -y chromium-browser
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # 3. 一键安装 (arm 分支)
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/arm/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/arm/install.sh | bash
 
 # 4. 启动
 cd ~/openshelley && ./start.sh

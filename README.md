@@ -1,6 +1,6 @@
-# Open Shelley Portal (Headless Shell 版)
+# Open Shelley Portal v2
 
-> 此分支使用 Google 官方 Chrome Headless Shell，仅支持 AMD64
+> 使用 Google 官方 Chrome Headless Shell，仅支持 AMD64
 
 一个为 [Open Shelley](https://github.com/boldsoftware/shelley) 设计的 Web 门户，提供：
 
@@ -23,13 +23,13 @@
 
 ```bash
 # 1. 安装 Chrome Headless Shell (官方稳定版)
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install-headless-shell.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2v2/main/install-headless-shell.sh | bash
 
 # 2. 设置 API Key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # 3. 运行安装脚本
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2v2/main/install.sh | bash
 
 # 4. 启动服务
 cd ~/openshelley && ./start.sh
@@ -50,7 +50,7 @@ cd ~/openshelley && ./start.sh
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/c21xdx/openshelley.git
+git clone https://github.com/c21xdx/openshelleyv2.git
 cd openshelley
 
 # 2. 编译 Portal

@@ -28,7 +28,7 @@ Google 官方为自动化测试提供的精简版 Chrome，特点：
 ### 一键安装
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install-headless-shell.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2v2/main/install-headless-shell.sh | bash
 ```
 
 ### 手动安装

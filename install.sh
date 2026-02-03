@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Open Shelley Portal 一键安装脚本
-# 用法: curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/main/install.sh | bash
+# 用法: curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/install.sh | bash
 #
 
 set -e
@@ -9,7 +9,7 @@ set -e
 # 配置
 INSTALL_DIR="${INSTALL_DIR:-$HOME/openshelley}"
 SHELLEY_REPO="boldsoftware/shelley"
-PORTAL_REPO="c21xdx/openshelley"
+PORTAL_REPO="c21xdx/openshelleyv2"
 SHELLEY_PORT="9001"
 PORTAL_PORT="8000"
 
@@ -50,7 +50,7 @@ check_deps() {
     if ! command -v headless-shell &> /dev/null && ! command -v chromium-browser &> /dev/null && ! command -v chromium &> /dev/null && ! command -v google-chrome &> /dev/null; then
         log_warn "未检测到浏览器"
         log_info "AMD64 推荐安装 Chrome Headless Shell:"
-        log_info "  curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/headless-shell/install-headless-shell.sh | bash"
+        log_info "  curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/install-headless-shell.sh | bash"
         log_info "或者: sudo apt install chromium-browser"
         echo ""
     fi
