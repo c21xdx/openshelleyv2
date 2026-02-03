@@ -1,7 +1,9 @@
-# Open Shelley Portal 开发总结
+# Open Shelley Portal v2 开发总结
 
 > 创建时间: 2026-01-31
+> 更新时间: 2026-02-03
 > 项目地址: https://github.com/c21xdx/openshelleyv2
+> 本地开发目录: /home/exedev/006
 
 ---
 
@@ -23,13 +25,21 @@
                     → Service Management
 ```
 
-## 分支说明
+## 仓库说明
 
-| 分支 | 目标架构 | 推荐配置 | 浏览器 | 说明 |
-|------|----------|----------|--------|------|
-| `main` | AMD64 | 1GB RAM + 2GB Swap | chromium-browser | 稳定版 |
-| `arm` | ARM64 | 2GB+ RAM | chromium-browser | 甲骨文 ARM |
-| `headless-shell` | AMD64 | 1GB RAM + 2GB Swap | Chrome Headless Shell | Google 官方版 |
+### 新仓库 (v2 - 当前项目)
+
+| 仓库 | 分支 | 架构 | 浏览器 | 说明 |
+|------|------|------|--------|------|
+| `openshelleyv2` | `main` | AMD64 | Chrome Headless Shell | **主力维护** |
+
+### 旧仓库 (v1 - 已弃用)
+
+| 仓库 | 分支 | 架构 | 浏览器 | 说明 |
+|------|------|------|--------|------|
+| `openshelley` | `main` | AMD64 | chromium-browser | 旧版 |
+| `openshelley` | `arm` | ARM64 | chromium-browser | 甲骨文 ARM |
+| `openshelley` | `headless-shell` | AMD64 | Chrome Headless Shell | 已迁移到 v2 |
 
 ## 文件结构
 
@@ -317,3 +327,39 @@ cp shelley.backup.20260131_120000 shelley
 
 - **2026-02-02**: 中文乱码修复
   - 截图中文乱码需安装字体: `sudo apt install -y fonts-noto-cjk`
+
+- **2026-02-03**: 项目重构
+  - 创建新仓库 `openshelleyv2`，作为主力维护项目
+  - 从旧仓库的 `headless-shell` 分支迁移而来
+  - 使用 Google 官方 Chrome Headless Shell
+  - 本地开发目录: `/home/exedev/006`
+  - 旧仓库 `openshelley` 保留但不再维护
+
+---
+
+## 下一步计划 / TODO
+
+- [ ] ARM64 支持 (等待 Google 发布 ARM64 版 headless-shell)
+- [ ] 自动化测试
+- [ ] 文档完善
+
+---
+
+## 快速开始 (新开发者)
+
+```bash
+# 克隆项目
+cd /home/exedev/006
+
+# 编译 Portal
+go build -o portal main.go
+
+# 查看状态
+git status
+git log --oneline -5
+
+# 推送更改
+git add <files>
+git commit -m "message"
+git push
+```
