@@ -279,7 +279,8 @@ func handleFilesAPI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	path := strings.TrimPrefix(r.URL.Path, "/portal/api/files")
 	if path == "" || path == "/" {
-		path = os.Getenv("HOME")
+		// 默认使用安装目录，和终端工作目录一致
+		path = baseDir
 	}
 
 	switch r.Method {
