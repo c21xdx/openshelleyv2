@@ -114,7 +114,7 @@ download_portal() {
     tar -xzf "$tmp_dir/portal.tar.gz" -C "$tmp_dir"
     
     log_info "编译 Portal..."
-    cd "$tmp_dir/openshelley-main"
+    cd "$tmp_dir/openshelleyv2-main"
     go build -o "$INSTALL_DIR/portal" main.go
     
     # 复制需要的文件
