@@ -92,9 +92,6 @@ func main() {
 	// Management API endpoints
 	mux.HandleFunc("/portal/api/mgmt/status", authMiddleware(handleMgmtStatus))
 	mux.HandleFunc("/portal/api/mgmt/token", authMiddleware(handleMgmtToken))
-	mux.HandleFunc("/portal/api/mgmt/start", authMiddleware(handleMgmtStart))
-	mux.HandleFunc("/portal/api/mgmt/stop", authMiddleware(handleMgmtStop))
-	mux.HandleFunc("/portal/api/mgmt/restart", authMiddleware(handleMgmtRestart))
 	mux.HandleFunc("/portal/api/mgmt/check-update", authMiddleware(handleMgmtCheckUpdate))
 	mux.HandleFunc("/portal/api/mgmt/update", authMiddleware(handleMgmtUpdate))
 	mux.HandleFunc("/portal/api/mgmt/backups", authMiddleware(handleMgmtBackups))
@@ -465,100 +462,6 @@ func handleMgmtStatus(w http.ResponseWriter, r *http.Request) {
 		"latest_version":   latestVer,
 		"has_update":       hasUpdate,
 	})
-}
-
-func handleMgmtStart(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	mgmtMutex.Lock()
-	defer mgmtMutex.Unlock()
-	
-	if isShelleyRunning() {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"output":  "Shelley is already running",
-		})
-		return
-	}
-	
-	// Start Shelley using the start script
-	scriptPath := filepath.Join(baseDir, "start.sh")
-	cmd := exec.Command("bash", scriptPath)
-	cmd.Dir = baseDir
-	
-	if err := cmd.Start(); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"error":   err.Error(),
-		})
-		return
-	}
-	
-	// Wait a bit for process to start
-	time.Sleep(3 * time.Second)
-	
-	if isShelleyRunning() {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"output":  "Shelley started successfully",
-		})
-	} else {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"error":   "Process failed to start. Check logs.",
-		})
-	}
-}
-
-func handleMgmtStop(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	mgmtMutex.Lock()
-	defer mgmtMutex.Unlock()
-	
-	cmd := exec.Command("pkill", "-f", "shelley.*serve")
-	cmd.Run() // Ignore error if not running
-	
-	time.Sleep(1 * time.Second)
-	
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-	})
-}
-
-func handleMgmtRestart(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	mgmtMutex.Lock()
-	defer mgmtMutex.Unlock()
-	
-	// Stop
-	stopScript := filepath.Join(baseDir, "stop.sh")
-	exec.Command("bash", stopScript).Run()
-	time.Sleep(2 * time.Second)
-	
-	// Start
-	startScript := filepath.Join(baseDir, "start.sh")
-	cmd := exec.Command("bash", startScript)
-	cmd.Dir = baseDir
-	
-	if err := cmd.Start(); err != nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"error":   err.Error(),
-		})
-		return
-	}
-	
-	time.Sleep(3 * time.Second)
-	
-	if isShelleyRunning() {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-		})
-	} else {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,
-			"error":   "Process failed to restart",
-		})
-	}
 }
 
 func handleMgmtCheckUpdate(w http.ResponseWriter, r *http.Request) {

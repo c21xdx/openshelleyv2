@@ -326,15 +326,6 @@
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-success" onclick="startShelley()" id="startBtn">
-                        ▶️ Start Shelley
-                    </button>
-                    <button class="btn btn-danger" onclick="stopShelley()" id="stopBtn">
-                        ⏹️ Stop Shelley
-                    </button>
-                    <button class="btn btn-warning" onclick="restartShelley()" id="restartBtn">
-                        🔄 Restart Shelley
-                    </button>
                     <button class="btn btn-primary" onclick="checkUpdate()" id="checkUpdateBtn">
                         🔍 Check Update
                     </button>
@@ -446,61 +437,6 @@
             }
             
             setButtonLoading(btn, false);
-        }
-        
-        async function startShelley() {
-            const btn = document.getElementById('startBtn');
-            setButtonLoading(btn, true);
-            clearLog();
-            log('Starting Shelley...', 'info');
-            
-            const result = await apiCall('start');
-            
-            if (result.success) {
-                log('Shelley started successfully!', 'success');
-                if (result.output) log(result.output, 'info');
-            } else {
-                log(`Failed to start: ${result.error}`, 'error');
-            }
-            
-            setButtonLoading(btn, false);
-            setTimeout(refreshStatus, 2000);
-        }
-        
-        async function stopShelley() {
-            const btn = document.getElementById('stopBtn');
-            setButtonLoading(btn, true);
-            clearLog();
-            log('Stopping Shelley...', 'info');
-            
-            const result = await apiCall('stop');
-            
-            if (result.success) {
-                log('Shelley stopped.', 'success');
-            } else {
-                log(`Failed to stop: ${result.error}`, 'error');
-            }
-            
-            setButtonLoading(btn, false);
-            setTimeout(refreshStatus, 1000);
-        }
-        
-        async function restartShelley() {
-            const btn = document.getElementById('restartBtn');
-            setButtonLoading(btn, true);
-            clearLog();
-            log('Restarting Shelley...', 'info');
-            
-            const result = await apiCall('restart');
-            
-            if (result.success) {
-                log('Shelley restarted successfully!', 'success');
-            } else {
-                log(`Failed to restart: ${result.error}`, 'error');
-            }
-            
-            setButtonLoading(btn, false);
-            setTimeout(refreshStatus, 2000);
         }
         
         async function checkUpdate() {
