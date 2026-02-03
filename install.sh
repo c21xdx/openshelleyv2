@@ -284,15 +284,30 @@ WantedBy=multi-user.target
 EOF
     
     log_success "systemd 服务文件已创建"
-    log_info "要安装为系统服务，运行:"
-    echo "    sudo cp $INSTALL_DIR/*.service /etc/systemd/system/"
-    echo "    sudo systemctl daemon-reload"
-    echo "    sudo systemctl enable openshelley portal"
-    echo "    sudo systemctl start openshelley portal"
+    
+    # 自动安装 systemd 服务
+    log_info "安装 systemd 服务..."
+    sudo cp "$INSTALL_DIR/openshelley.service" /etc/systemd/system/
+    sudo cp "$INSTALL_DIR/portal.service" /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable openshelley portal
+    sudo systemctl start openshelley portal
+    
+    # 等待服务启动
+    sleep 3
+    
+    if systemctl is-active --quiet openshelley && systemctl is-active --quiet portal; then
+        log_success "systemd 服务已安装并启动"
+    else
+        log_warn "systemd 服务可能启动失败，请检查: systemctl status openshelley portal"
+    fi
 }
 
 # 完成信息
 print_finish() {
+    local portal_token=$(grep PORTAL_TOKEN "$INSTALL_DIR/.env" | cut -d= -f2)
+    local server_ip=$(curl -s ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+    
     echo ""
     echo -e "${GREEN}========================================${NC}"
     echo -e "${GREEN}  ✅ Open Shelley Portal 安装完成!${NC}"
@@ -300,19 +315,13 @@ print_finish() {
     echo ""
     echo "安装目录: $INSTALL_DIR"
     echo ""
-    echo "快速启动:"
-    echo "    cd $INSTALL_DIR && ./start.sh"
+    echo -e "${YELLOW}访问地址:${NC} http://$server_ip:$PORTAL_PORT/login"
+    echo -e "${YELLOW}登录 Token:${NC} $portal_token"
     echo ""
-    echo "停止服务:"
-    echo "    cd $INSTALL_DIR && ./stop.sh"
-    echo ""
-    echo "查看状态:"
-    echo "    cd $INSTALL_DIR && ./status.sh"
-    echo ""
-    echo "Systemd 部署 (可选):"
-    echo "    sudo cp $INSTALL_DIR/*.service /etc/systemd/system/"
-    echo "    sudo systemctl daemon-reload"
-    echo "    sudo systemctl enable --now openshelley portal"
+    echo "管理命令:"
+    echo "    systemctl status openshelley portal   # 查看状态"
+    echo "    systemctl restart openshelley portal  # 重启服务"
+    echo "    journalctl -u openshelley -f          # 查看日志"
     echo ""
 }
 
