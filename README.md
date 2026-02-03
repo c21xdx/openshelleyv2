@@ -23,13 +23,13 @@
 
 ```bash
 # 1. 安装 Chrome Headless Shell (官方稳定版)
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2v2/main/install-headless-shell.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/install-headless-shell.sh | bash
 
 # 2. 设置 API Key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # 3. 运行安装脚本
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2v2/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/main/install.sh | bash
 
 # 4. 启动服务
 cd ~/openshelley && ./start.sh
