@@ -30,14 +30,14 @@ check_deps() {
     log_info "检查依赖..."
     local missing=""
     
-    for cmd in curl jq; do
+    for cmd in curl jq git; do
         if ! command -v $cmd &> /dev/null; then
             missing="$missing $cmd"
         fi
     done
     
     if ! command -v go &> /dev/null; then
-        missing="$missing golang"
+        missing="$missing golang-go"
     fi
     
     if [[ -n "$missing" ]]; then
@@ -86,8 +86,46 @@ detect_arch() {
 # 创建目录结构
 create_dirs() {
     log_info "创建目录: $INSTALL_DIR"
-    mkdir -p "$INSTALL_DIR"/{data,logs}
+    mkdir -p "$INSTALL_DIR"/{data,logs,code}
     log_success "目录创建完成"
+    
+    # 初始化工作目录为 Git 仓库，并创建 AGENTS.md
+    log_info "初始化工作目录..."
+    cd "$INSTALL_DIR/code"
+    git init -q
+    git config user.email "agent@local"
+    git config user.name "Agent"
+    
+    cat > AGENTS.md << 'AGENTSEOF'
+# AI Agent 工作指南
+
+## 工作方式
+- 遇到错误自己调试修复，不要问我
+- 代码简单易懂，加中文注释
+- 不要问确认问题，直接做
+
+## 减少 Token（重要！）
+
+### 截图
+- ❌ 不要频繁截图（每张 ~1500 token）
+- ✅ 用 curl 检查: `curl -s http://localhost:8000/ | head -50`
+
+### 文件操作
+- 先 `ls`，不要盲目 cat
+- 用 `head -50` 预览
+- 用 `grep` 搜索
+- 用 patch 精确修改
+
+## 完成后
+- 简要说明做了什么
+- 告诉我怎么运行
+AGENTSEOF
+    
+    git add AGENTS.md
+    git commit -q -m "init with AGENTS.md"
+    cd - > /dev/null
+    
+    log_success "工作目录初始化完成: $INSTALL_DIR/code"
 }
 
 # 下载 Shelley
@@ -314,6 +352,7 @@ print_finish() {
     echo -e "${GREEN}========================================${NC}"
     echo ""
     echo "安装目录: $INSTALL_DIR"
+    echo -e "工作目录: ${YELLOW}$INSTALL_DIR/code${NC} (已初始化 Git + AGENTS.md)"
     echo ""
     echo -e "${YELLOW}访问地址:${NC} http://$server_ip:$PORTAL_PORT/login"
     echo -e "${YELLOW}登录 Token:${NC} $portal_token"
