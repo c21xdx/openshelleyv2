@@ -121,6 +121,8 @@ cd ~/openshelley && ./start.sh
 
 ### ARM64 (12GB 内存)
 
+> ⚠️ **注意**: openshelleyv2 目前仅支持 AMD64。ARM64 请使用旧仓库:
+
 ```bash
 # 1. 安装浏览器
 sudo apt install -y chromium-browser
@@ -128,8 +130,8 @@ sudo apt install -y chromium-browser
 # 2. 设置 API Key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
-# 3. 一键安装 (arm 分支)
-curl -sSL https://raw.githubusercontent.com/c21xdx/openshelleyv2/arm/install.sh | bash
+# 3. 一键安装 (使用旧仓库 arm 分支)
+curl -sSL https://raw.githubusercontent.com/c21xdx/openshelley/arm/install.sh | bash
 
 # 4. 启动
 cd ~/openshelley && ./start.sh

@@ -51,7 +51,7 @@ cd ~/openshelley && ./start.sh
 ```bash
 # 1. 克隆项目
 git clone https://github.com/c21xdx/openshelleyv2.git
-cd openshelley
+cd openshelleyv2
 
 # 2. 编译 Portal
 go build -o portal main.go
