@@ -125,26 +125,41 @@ curl -sI http://localhost:8000/ | head -5
 - 需要用户交互 (点击、输入)
 - 调试 CSS/布局问题
 
-### 截图使用原则
+### 页面检查最佳实践
 
-截图消耗大量 token (~1000-2000/张)，应该：
+| 方式 | Token 消耗 | 用途 |
+|------|------------|------|
+| `curl` | 极低 | 检查基本内容、API 响应 |
+| `iframe` | 0 | 给用户展示最终效果 |
+| 截图 | ~1500-2000/张 | 调试 UI 布局/样式问题 |
 
+**开发过程中**：用 `curl` 检查
+```bash
+# 检查页面基本内容
+curl -s http://localhost:8000/ | head -50
+
+# 检查 HTTP 状态
+curl -sI http://localhost:8000/ | head -5
+
+# 检查错误
+curl -s http://localhost:8000/ | grep -i error
 ```
-❌ 不要: 每次修改后都截图确认
+
+**需要调试 UI 时**：截图
+```
+❌ 不要: 每次修改后都截图
 ❌ 不要: 用截图检查文字内容
 ❌ 不要: 连续多张截图
 
-✅ 可以: 最终完成时截图给用户看
-✅ 可以: 调试 UI 布局/样式问题时
-✅ 可以: 用户明确要求看截图时
+✅ 可以: 调试 CSS/布局问题时
+✅ 可以: 用户明确要求时
 ```
 
-**替代截图的方法**:
-```javascript
-// 用 browser_eval 获取页面信息 (省 token)
-document.title
-document.body.innerText.substring(0, 500)
-document.querySelector('.error')?.textContent
+**给用户展示效果**：用 `iframe`
+```
+✅ iframe 不消耗 token，只是嵌入 URL 给用户看
+✅ 适合展示最终完成的页面
+⚠️ 注意：LLM 看不到 iframe 内容，无法分析
 ```
 
 ### 编辑文件
