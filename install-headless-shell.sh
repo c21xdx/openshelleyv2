@@ -29,6 +29,18 @@ if [[ "$ARCH" != "x86_64" ]]; then
     exit 1
 fi
 
+# 修复 Ubuntu 24.04 apt_pkg 问题
+if [[ -d /usr/lib/python3/dist-packages ]] && ! python3 -c "import apt_pkg" 2>/dev/null; then
+    log_info "修复 Ubuntu 24.04 apt_pkg 问题..."
+    cd /usr/lib/python3/dist-packages
+    APT_PKG_FILE=$(ls apt_pkg.cpython-*.so 2>/dev/null | head -1)
+    if [[ -n "$APT_PKG_FILE" ]]; then
+        sudo ln -sf "$APT_PKG_FILE" apt_pkg.so
+        log_success "apt_pkg 已修复"
+    fi
+    cd - > /dev/null
+fi
+
 # 检查依赖
 for cmd in curl jq unzip; do
     if ! command -v $cmd &> /dev/null; then
