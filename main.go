@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bufio"
 	"bytes"
 	"crypto/rand"
@@ -9,6 +10,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -88,6 +90,8 @@ func main() {
 	// Portal API endpoints (require auth)
 	mux.HandleFunc("/portal/api/files/", authMiddleware(handleFilesAPI))
 	mux.HandleFunc("/portal/api/file/", authMiddleware(handleFileAPI))
+	mux.HandleFunc("/portal/api/upload/", authMiddleware(handleUpload))
+	mux.HandleFunc("/portal/api/download/", authMiddleware(handleDownload))
 
 	// Management API endpoints
 	mux.HandleFunc("/portal/api/mgmt/status", authMiddleware(handleMgmtStatus))
@@ -392,6 +396,129 @@ func handleFileAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	}
+}
+
+// ============== Upload/Download Handlers ==============
+
+// 上传文件
+func handleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 获取目标目录
+	targetDir := strings.TrimPrefix(r.URL.Path, "/portal/api/upload")
+	if targetDir == "" || targetDir == "/" {
+		targetDir = baseDir
+	}
+
+	// 解析 multipart form
+	err := r.ParseMultipartForm(100 << 20) // 100MB 限制
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	files := r.MultipartForm.File["files"]
+	if len(files) == 0 {
+		http.Error(w, "No files uploaded", http.StatusBadRequest)
+		return
+	}
+
+	var uploaded []string
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+
+		dstPath := filepath.Join(targetDir, fileHeader.Filename)
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			continue
+		}
+		defer dst.Close()
+
+		io.Copy(dst, file)
+		uploaded = append(uploaded, fileHeader.Filename)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"files":   uploaded,
+	})
+}
+
+// 下载文件或文件夹
+func handleDownload(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/portal/api/download")
+	if path == "" {
+		http.Error(w, "Path required", http.StatusBadRequest)
+		return
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if info.IsDir() {
+		// 文件夹 - 打包成 zip
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(path)+".zip\"")
+		
+		zipWriter := zip.NewWriter(w)
+		defer zipWriter.Close()
+
+		filepath.Walk(path, func(filePath string, fileInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if fileInfo.IsDir() {
+				return nil
+			}
+
+			// 相对路径
+			relPath, _ := filepath.Rel(path, filePath)
+			zipFile, err := zipWriter.Create(relPath)
+			if err != nil {
+				return err
+			}
+
+			file, err := os.Open(filePath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			io.Copy(zipFile, file)
+			return nil
+		})
+	} else {
+		// 单文件
+		ext := filepath.Ext(path)
+		mimeType := mime.TypeByExtension(ext)
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+		
+		w.Header().Set("Content-Type", mimeType)
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(path)+"\"")
+		w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+
+		file, err := os.Open(path)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		io.Copy(w, file)
 	}
 }
 
