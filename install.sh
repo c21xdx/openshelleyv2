@@ -30,7 +30,7 @@ check_deps() {
     log_info "检查依赖..."
     local missing=""
     
-    for cmd in curl jq git; do
+    for cmd in curl jq git file; do
         if ! command -v $cmd &> /dev/null; then
             missing="$missing $cmd"
         fi
