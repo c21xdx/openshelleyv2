@@ -317,6 +317,11 @@ EOF
     else
         log_warn "systemd 服务可能启动失败，请检查: systemctl status openshelley portal"
     fi
+    
+    # 开放 Portal 端口
+    log_info "开放防火墙端口 $PORTAL_PORT..."
+    sudo iptables -I INPUT -p tcp --dport $PORTAL_PORT -j ACCEPT 2>/dev/null || true
+    log_success "端口 $PORTAL_PORT 已开放"
 }
 
 # 完成信息
