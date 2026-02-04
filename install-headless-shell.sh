@@ -80,8 +80,8 @@ if [[ "$UBUNTU_VERSION" == "24.04"* ]] || [[ "${UBUNTU_VERSION%%.*}" -ge 24 ]]; 
         libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
         libpango-1.0-0 libcairo2 libx11-6 libx11-xcb1 libxcb1 \
         libxext6 libxshmfence1 libglib2.0-0t64 libdbus-1-3 \
-        fonts-liberation libvulkan1 xdg-utils ca-certificates \
-        libasound2t64"
+        fonts-liberation fonts-noto-cjk fonts-wqy-zenhei \
+        libvulkan1 xdg-utils ca-certificates libasound2t64"
 else
     log_info "使用 Ubuntu 22.04 及更早版本依赖包名..."
     DEPS="libnspr4 libnss3 libexpat1 libfontconfig1 libuuid1 \
@@ -90,8 +90,8 @@ else
         libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
         libpango-1.0-0 libcairo2 libx11-6 libx11-xcb1 libxcb1 \
         libxext6 libxshmfence1 libglib2.0-0 libdbus-1-3 \
-        fonts-liberation libvulkan1 xdg-utils ca-certificates \
-        libasound2"
+        fonts-liberation fonts-noto-cjk fonts-wqy-zenhei \
+        libvulkan1 xdg-utils ca-certificates libasound2"
 fi
 
 # 安装依赖
