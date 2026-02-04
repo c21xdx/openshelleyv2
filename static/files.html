@@ -428,6 +428,7 @@
     <!-- Context Menu -->
     <div class="context-menu" id="context-menu">
         <div class="context-menu-item" onclick="openFile()">📄 Open</div>
+        <div class="context-menu-item" id="preview-menu-item" onclick="previewSelectedImage()" style="display:none">👁 Preview</div>
         <div class="context-menu-item" onclick="downloadFile()">⬇ Download</div>
         <div class="context-menu-item" onclick="showRenameModal()">✏️ Rename</div>
         <div class="context-menu-divider"></div>
@@ -534,6 +535,8 @@
                 item.addEventListener('dblclick', () => {
                     if (file.isDir) {
                         loadDirectory(file.path);
+                    } else if (isImageFile(file.name)) {
+                        previewImage(file.path, file.name);
                     } else {
                         openFileContent(file.path);
                     }
@@ -554,10 +557,37 @@
                 'sh': '💻', 'bash': '💻', 'zsh': '💻',
                 'sql': '🗃', 'db': '🗃',
                 'yml': '⚙️', 'yaml': '⚙️', 'toml': '⚙️',
-                'png': '🖼', 'jpg': '🖼', 'gif': '🖼', 'svg': '🖼',
+                'png': '🖼', 'jpg': '🖼', 'jpeg': '🖼', 'gif': '🖼', 'svg': '🖼', 'webp': '🖼', 'bmp': '🖼', 'ico': '🖼',
                 'zip': '📦', 'tar': '📦', 'gz': '📦'
             };
             return icons[ext] || '📄';
+        }
+
+        // 判断是否为图片文件
+        function isImageFile(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            return ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'].includes(ext);
+        }
+
+        // 图片预览
+        function previewImage(path, name) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 90%; max-height: 90%; overflow: auto; text-align: center;">
+                    <h3>🖼 ${name}</h3>
+                    <img src="/portal/api/download${path}" style="max-width: 100%; max-height: 70vh; object-fit: contain;" />
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button class="nav-btn" onclick="this.closest('.modal').remove()">关闭</button>
+                        <button class="save-btn" onclick="window.open('/portal/api/download${path}')">下载</button>
+                    </div>
+                </div>
+            `;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+            document.body.appendChild(modal);
         }
 
         function formatSize(bytes) {
@@ -665,7 +695,23 @@
             const menu = document.getElementById('context-menu');
             menu.style.left = e.clientX + 'px';
             menu.style.top = e.clientY + 'px';
+            
+            // 显示/隐藏图片预览选项
+            const previewItem = document.getElementById('preview-menu-item');
+            if (!file.isDir && isImageFile(file.name)) {
+                previewItem.style.display = 'block';
+            } else {
+                previewItem.style.display = 'none';
+            }
+            
             menu.classList.add('visible');
+        }
+        
+        function previewSelectedImage() {
+            if (selectedFile && isImageFile(selectedFile.name)) {
+                previewImage(selectedFile.path, selectedFile.name);
+            }
+            hideContextMenu();
         }
 
         document.addEventListener('click', () => {
