@@ -106,60 +106,42 @@ command | head -100
 command 2>&1 | tail -20
 ```
 
-### 浏览器 vs curl
+### 浏览器和截图使用
 
-**优先用 curl** (省 token):
+**调试 UI/网页时，应该主动截图查看**：
+- 页面布局问题 → 截图
+- CSS 样式问题 → 截图
+- JavaScript 交互问题 → 先截图看当前状态
+- 不确定页面显示是否正确 → 截图确认
+- 修改前后对比 → 截图
+
+**用 curl 的场景**：
+- 纯 API 测试 (JSON 响应)
+- 检查 HTTP 状态码
+- 简单的文本内容检查
+
 ```bash
-# ✅ 测试 API
+# API 测试
 curl -s http://localhost:8000/api/data | head -50
-
-# ✅ 检查页面响应
-curl -s http://localhost:8000/ | grep -E "<title>|error|Error"
-
-# ✅ 检查 HTTP 状态
-curl -sI http://localhost:8000/ | head -5
-```
-
-**只在必要时用浏览器**:
-- 需要执行 JavaScript
-- 需要用户交互 (点击、输入)
-- 调试 CSS/布局问题
-
-### 页面检查最佳实践
-
-| 方式 | Token 消耗 | 用途 |
-|------|------------|------|
-| `curl` | 极低 | 检查基本内容、API 响应 |
-| `iframe` | 0 | 给用户展示最终效果 |
-| 截图 | ~1500-2000/张 | 调试 UI 布局/样式问题 |
-
-**开发过程中**：用 `curl` 检查
-```bash
-# 检查页面基本内容
-curl -s http://localhost:8000/ | head -50
 
 # 检查 HTTP 状态
 curl -sI http://localhost:8000/ | head -5
-
-# 检查错误
-curl -s http://localhost:8000/ | grep -i error
 ```
 
-**需要调试 UI 时**：截图
-```
-❌ 不要: 每次修改后都截图
-❌ 不要: 用截图检查文字内容
-❌ 不要: 连续多张截图
+**不要过度担心 Token 消耗**：
+- 截图是调试 UI 的正常手段
+- 看不到问题就无法修复
+- 宁可多截一张图，也不要盲目猜测
+- 一张截图 (~1500 tokens) 比反复试错更省
 
-✅ 可以: 调试 CSS/布局问题时
-✅ 可以: 用户明确要求时
+**截图工作流**：
 ```
-
-**给用户展示效果**：用 `iframe`
-```
-✅ iframe 不消耗 token，只是嵌入 URL 给用户看
-✅ 适合展示最终完成的页面
-⚠️ 注意：LLM 看不到 iframe 内容，无法分析
+1. 启动服务
+2. browser_navigate 到页面
+3. browser_take_screenshot 查看效果
+4. 发现问题 → 修改代码
+5. 刷新页面 → 再次截图确认
+6. 循环直到正确
 ```
 
 ### 编辑文件
